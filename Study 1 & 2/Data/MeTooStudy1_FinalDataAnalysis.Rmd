@@ -1,0 +1,73 @@
+---
+title: "MeToo_Final"
+author: "Brier Gallihugh, B.S"
+date: "1/7/2020"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r data input}
+  library(car)
+  library(pastecs)
+  library(emmeans)
+  library(psych)
+
+MeTooData <- read.csv("Me Too Project_Cleaned_01_06.csv", header = TRUE)
+
+RelevantData$CandidateIV <- MeTooData$Candidate_Condition
+RelevantData$ParticipantIV <- MeTooData$Political.Leanings
+RelevantData$SupportDV <- MeTooData$Your_Support_1
+```
+
+```{r assumptions}
+#Normality Assumption for General Support
+NormalityResiduals <- rstandard(aov(RelevantData$SupportDV ~ RelevantData$ParticipantIV * RelevantData$CandidateIV))
+hist(AOVResid, col = 'lightgrey', 
+     main="", xlab = "ANOVA Model Residuals",
+     probability = TRUE)
+curve(dnorm(x, mean = mean(AOVResid), 
+            sd = sd(AOVResid)), 
+            add = TRUE, lwd = 2, col = 'blue')
+#Stat test for non-normal
+describe(NormalityResiduals)
+
+#Degree of Support
+#Homogeneity of Variance for Degree Support (ParticipantAffiliation)
+boxplot(RelevantData$SupportDV ~ RelevantData$ParticipantIV)
+#Levene Test for Degree Support (ParticipantAffiliation)
+leveneTest(y = RelevantData$SupportDV, group = RelevantData$ParticipantIV)
+#Homogeneity of Variance for Degree Support (CandidateAffiliation)
+boxplot(RelevantData$SupportDV ~ RelevantData$CandidateIV)
+#Leven's Test for Degree of Support (CandidateAffiliation)
+leveneTest(y = RelevantData$SupportDV, group = RelevantData$CandidateIV)
+```
+
+
+```{r analysis}
+#Degree of Support (DV1)
+SupportFit <- aov(RelevantData$SupportDV ~ RelevantData$ParticipantIV * RelevantData$CandidateIV)
+summary(SupportFit)
+#Effect Size
+Anova(SupportFit, type = "III")
+anova_stats(SupportFit)
+#Post Hoc Interaction Effects
+SupportPostHoc <- lsmeans(SupportFit,
+                      pairwise ~ ParticipantIV:CandidateIV,
+                      adjust="tukey")
+summary(SupportPostHoc)
+```
+
+*Results*
+
+Results indicated both a main effect of candidate affiliation on candidate support (*F* = 43.97, *p* < .001, $eta^2$ = .049) and a main effect of participant affiliation on candidate support (*F* = 9.98, *p* = .002, $eta^2$ = .121). Further, results also indicated an interaction effect of candidate and participant affiliation on candidate support (*F* = 30.19, *p* < .001, $eta^2$ = .077). A post hoc analysis using a Tukey adjustment indicated the following:
+
+Main Effect (Candidate Affiliation): Liberal participants indicate higher degrees of support for liberal candidates than conservative candidates (diff = .789, *p* < .001).  [1,1 - 1,2]
+
+Main Effect (Participant Affiliation): Conservative candidates recieve higher levels of support from conservative participants than they do liberal participants (diff = 1.40, *p* < .001). [1,2 - 2,2]
+
+Interaction Effect: Conservative participants indicate higher degrees of support for their in-group candidates than libeals participants indicate for their in-group candidates (diff = .607, *p* = .002).   [1,1 - 2,2]
+
+Interaction Effect: Conservative participants indicate a higher degree of support for their out-group candidates than liberals do for their out-group candidates (diff = .906, *p* < .001).  [2,1 - 1,2]
